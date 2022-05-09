@@ -1,6 +1,7 @@
-#!/usr/bin/env python3
+#/usr/bin/env python3
 from multiprocessing import Process
 import iperf3
+import MODELS
 
 
 def start_servers(flow):
@@ -12,7 +13,6 @@ def start_servers(flow):
         print(f'From port {server.port} - {mbps} Mbps')
 
 if __name__ == "__main__":
-    flows = [5204, 5205, 5206]
-    for flow in flows:
-        p = Process(target=start_servers, args=(flow,))
+    for flow in MODELS.flows:
+        p = Process(target=start_servers, args=(flow['port'],))
         p.start()
