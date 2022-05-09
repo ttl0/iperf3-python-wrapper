@@ -10,14 +10,14 @@ There was an issue with iPerf and multithreading *possibly due to GIL.
 ```
 sudo apt install iperf3
 ```
-## Example Server
+## Server
 ```
 >>>import iperf3
 >>> server = iperf3.Server()
 >>> result = server.run()
 ```
 
-## Example Client and set packets to DSCP EF
+## Client with DSCP EF set
 We must use the ToS(hex) value to set the client (Sender) side DSCP bits
 ```
 >>> import iperf3
