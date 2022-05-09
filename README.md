@@ -12,7 +12,7 @@ sudo apt install iperf3
 ```
 ## Server
 ```
->>>import iperf3
+>>> import iperf3
 >>> server = iperf3.Server()
 >>> result = server.run()
 ```
