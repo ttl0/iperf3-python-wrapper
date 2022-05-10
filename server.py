@@ -7,12 +7,13 @@ import MODELS
 def start_servers(flow, output):
     server = iperf3.Server()
     server.port = flow['port']
-    result = server.run()
-    received = round(result.received_Mbps, 2)
-    return_dict = {}
-    return_dict['name'] = flow['name']
-    return_dict['received'] = received 
-    output.append(return_dict)
+    while True:
+        result = server.run()
+        received = round(result.received_Mbps, 2)
+        return_dict = {}
+        return_dict['name'] = flow['name']
+        return_dict['received'] = received 
+        output.append(return_dict)
 
 
 if __name__ == "__main__":
