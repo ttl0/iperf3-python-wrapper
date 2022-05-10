@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import iperf3
+from tabulate import tabulate
+from operator import itemgetter
 from multiprocessing import Process, Manager
 from queue import Queue
 import time
@@ -30,7 +32,7 @@ TOSTOHEX = {
         
 def start_stream(flow, output):
     client = iperf3.Client()
-    client.duration = 1 
+    client.duration = 10
     client.server_hostname = '10.0.1.31'
     # 1MBps
     client.bandwidth = flow['bw'] 
@@ -38,7 +40,7 @@ def start_stream(flow, output):
     dscp = flow['dscp']
     client.tos = TOSTOHEX[dscp]
 
-    print('Connecting to {0}:{1}'.format(client.server_hostname, client.port))
+#    print('Connecting to {0}:{1}'.format(client.server_hostname, client.port))
     result = client.run()
 
     if result.error:
@@ -48,9 +50,9 @@ def start_stream(flow, output):
         sent = round(result.sent_Mbps,2)
         received = round(result.received_Mbps,2)
         return_dict['name'] = flow['name']
+        return_dict['dscp'] = flow['dscp']
         return_dict['sent'] = sent
         return_dict['received'] = received
-        name = flow['name']
         del client
         output.append(return_dict)
 
@@ -58,23 +60,22 @@ def start_stream(flow, output):
 if __name__ == "__main__":
     # Even if networking is IO bound, we use multiprocessing due to
     # iPerf restrictions on GIL
-    manager = Manager()
-    output = manager.list()
-    processes = []
-#    for _ in range(1):
-    for flow in MODELS.flows:
-        p = Process(target=start_stream, args=(flow, output))
-        processes.append(p)
+    for i in range(100):
+        manager = Manager()
+        output = manager.list()
+        processes = []
+        for flow in MODELS.flows:
+            p = Process(target=start_stream, args=(flow, output))
+            processes.append(p)
 
-    for process in processes:
-        process.start()
+        for process in processes:
+            process.start()
 
-    for process in processes:
-        process.join()
-    
-    sorted_output = sorted(output, key=lambda d: d['name']) 
-    print(sorted_output)
-
-
-
+        for process in processes:
+            process.join()
+        
+        sorted_output = sorted(output, key=lambda d: d['name']) 
+        print("Count: {}".format(i+1))
+        print(tabulate(sorted(sorted_output, key=itemgetter("name", "dscp", "sent", "received")), headers="keys"))
+        print("\033[F"*(len(sorted_output)+4))
 
