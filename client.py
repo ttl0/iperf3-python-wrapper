@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import iperf3
-from multiprocessing import Process
+from multiprocessing import Process, Manager
 from queue import Queue
 import time
 import MODELS
@@ -28,11 +28,10 @@ TOSTOHEX = {
         'cs1': 0x20
         }
         
-def start_stream(flow):
+def start_stream(flow, output):
     client = iperf3.Client()
-    #
-    client.duration = 9 
-    client.server_hostname = '192.168.138.129'
+    client.duration = 1 
+    client.server_hostname = '10.0.1.31'
     # 1MBps
     client.bandwidth = flow['bw'] 
     client.port = flow['port'] 
@@ -45,23 +44,37 @@ def start_stream(flow):
     if result.error:
         print(result.error)
     else:
-        print('')
-        print('Test completed:')
-        print('  Started at         {0}'.format(result.time))
-        mbps = round(result.sent_Mbps,2)
-        print('  Megabits per second (Mbps) {0}'.format(mbps))
-        print('  Sent with DSCP {0}'.format(dscp.upper()))
-    print(f'Done with stream {client.port}')
+        return_dict = {}
+        sent = round(result.sent_Mbps,2)
+        received = round(result.received_Mbps,2)
+        return_dict['name'] = flow['name']
+        return_dict['sent'] = sent
+        return_dict['received'] = received
+        name = flow['name']
+        del client
+        output.append(return_dict)
 
 
 if __name__ == "__main__":
     # Even if networking is IO bound, we use multiprocessing due to
     # iPerf restrictions on GIL
-    for _ in range(1):
-        for i, flow in enumerate(MODELS.flows):
-            p = Process(target=start_stream, args=(flow,))
-            p.start()
-        time.sleep(10)
+    manager = Manager()
+    output = manager.list()
+    processes = []
+#    for _ in range(1):
+    for flow in MODELS.flows:
+        p = Process(target=start_stream, args=(flow, output))
+        processes.append(p)
+
+    for process in processes:
+        process.start()
+
+    for process in processes:
+        process.join()
+    
+    sorted_output = sorted(output, key=lambda d: d['name']) 
+    print(sorted_output)
+
 
 
 
