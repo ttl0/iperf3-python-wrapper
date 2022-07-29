@@ -7,7 +7,7 @@ from queue import Queue
 import time
 import MODELS
 
-
+# mapping to get DSCP values
 TOSTOHEX = { 
         'cs7': 0xE0,
         'cs6': 0xC0,
